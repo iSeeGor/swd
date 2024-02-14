@@ -1,4 +1,5 @@
 import domReady from '@wordpress/dom-ready';
+import {setCookie, getCookie} from './helpers/cookie';
 
 function toggleVideo(): void {
 	// find all video poster sections
@@ -180,12 +181,33 @@ function clickOnFilter(): void {
 }
 
 function downloadModal(): void {
+	const downloadModalCookieName = "download_modal_cookie";
+
+	// handles the download of a file by creating an anchor element
+	function downloadFileHandler(link: string): void{
+		const anchorElement: HTMLAnchorElement = document.createElement('a');
+
+		anchorElement.href = link;
+		anchorElement.download = '';
+		anchorElement.click();
+	}
+	
 	// Add click event listener to all buttons with 'data-download-btn' attribute
 	document.querySelectorAll<HTMLButtonElement>('[data-download-btn]').forEach((button: HTMLButtonElement) => {
 		button.addEventListener('click', (e: MouseEvent) => {
 			e.preventDefault();
+			// get the cookie value and convert it to boolean
+			const downloadModalCookie = !! getCookie(downloadModalCookieName);
+
 			// get the download link from the button's dataset
 			const currentLink: string | undefined = button.dataset.file;
+
+			// download the link if cookie value is "true"
+			if ( downloadModalCookie ) {
+				if ( currentLink ) downloadFileHandler(currentLink);
+
+				return false;
+			}
 
 			// find the download form
 			const form: HTMLFormElement | null = document.querySelector('.download-form-wrapper.popup form.wpcf7-form');
@@ -232,12 +254,11 @@ function downloadModal(): void {
 			if (downloadLinkInput) {
 				const downloadLink: string = downloadLinkInput.value;
 				if (downloadLink) {
-					// create an anchor element to trigger the file download
-					const anchorElement: HTMLAnchorElement = document.createElement('a');
-					anchorElement.href = downloadLink;
-					anchorElement.download = '';
-					anchorElement.click();
+					downloadFileHandler(downloadLink);
 				}
+
+				// Add cookie with "true" value
+				setCookie(downloadModalCookieName, 'true', 60);
 			}
 		});
 	}
