@@ -1,0 +1,27 @@
+name: 'staging'
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        name: 'Deploying'
+        runs-on: 'ubuntu-latest'
+        env:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+            REMOTE_HOST: 'swd.testkopie.dev'
+            REMOTE_USER: 'ploi'
+            REMOTE_PORT: '22'
+            ARGS: '-avzr --delete'
+            SOURCE: 'dist/'
+            TARGET: '/home/ploi/swd.testkopie.dev/public/wp-content/themes/swd/'
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3.6.0
+              with:
+                  node-version: '20.3.0'
+            - run: 'npm install'
+            - run: 'composer install'
+            - run: 'npm run dist'
+            - uses: easingthemes/ssh-deploy@v4.1.8
